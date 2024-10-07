@@ -30,7 +30,7 @@ logging.debug('Facial recognition script started')
 
 # Constants
 MAX_ATTEMPTS = 5
-REQUIRED_MATCHES = 1
+REQUIRED_MATCHES = 3
 SLEEP_INTERVAL = 1
 IMAGE_PATH = "/home/nikitamitin/PycharmProjects/larva/faces/"
 FLAG_FILE = "/tmp/face_recognized"
@@ -60,6 +60,7 @@ def detect_face(image_path):
     if len(faces) > 0:
         x, y, w, h = faces[0]
         face_img = gray[y:y + h, x:x + w]
+        face_img = cv2.resize(face_img, (200, 200))  # Resize for consistency
         return face_img
     else:
         logging.warning("No face detected in image: " + image_path)
@@ -103,6 +104,7 @@ def detect_face_from_frame(frame):
     if len(faces) > 0:
         x, y, w, h = faces[0]
         face_img = gray[y:y + h, x:x + w]
+        face_img = cv2.resize(face_img, (200, 200))  # Resize for consistency
         return face_img
     else:
         return None
@@ -114,47 +116,46 @@ def apply_clahe(image):
     clahe = cv2.createCLAHE(clipLimit=1.0, tileGridSize=(8, 8))
     return clahe.apply(image)
 
-@timing_decorator
-def authenticate_user(known_ids):
+def train_recognizer(user_id):
     """
-    Authenticates the user by comparing captured face images with stored ones.
+    Trains the recognizer on 10 images of the specified user ID.
+    """
+    recognizer = cv2.face.LBPHFaceRecognizer_create()
+    faces = []
+    labels = []
+
+    for i in range(10):
+        known_face_path = f"{IMAGE_PATH}{user_id}_{i}.jpg"
+        if not os.path.exists(known_face_path):
+            logging.warning(f"Stored image not found: {known_face_path}")
+            continue
+        face_img = detect_face(known_face_path)
+        if face_img is not None:
+            faces.append(face_img)
+            labels.append(user_id)
+        else:
+            logging.warning(f"No face detected in image: {known_face_path}")
+
+    if not faces:
+        logging.error("No training data available")
+        return None
+
+    recognizer.train(faces, np.array(labels))
+    logging.info(f"Recognizer trained for user {user_id} with {len(faces)} images.")
+    return recognizer
+
+@timing_decorator
+def authenticate_user(recognizer):
+    """
+    Authenticates the user by comparing captured face images with trained recognizer.
     """
     logging.info("Authentication started!")
     video_capture = cv2.VideoCapture(0)
-    verif_count = 0
     attempts = 0
 
-    # Initialize the LBPH face recognizer
-    recognizer = cv2.face.LBPHFaceRecognizer_create()
-
-    # Prepare training data
-    faces = []
-    labels = []
-    label_dict = {}
-    label_counter = 0
-
-    for user_id in known_ids:
-        for i in range(10):
-            known_face_path = f"{IMAGE_PATH}{user_id}_{i}.jpg"
-            if not os.path.exists(known_face_path):
-                logging.warning(f"Stored image not found: {known_face_path}")
-                continue
-            face_img = detect_face(known_face_path)
-            if face_img is not None:
-                faces.append(face_img)
-                if user_id not in label_dict:
-                    label_dict[user_id] = label_counter
-                    label_counter += 1
-                labels.append(label_dict[user_id])
-            else:
-                logging.warning(f"No face detected in image: {known_face_path}")
-
-    if not faces or not labels:
-        logging.error("No training data available")
+    if recognizer is None:
+        logging.error("Recognizer not trained.")
         return 1
-
-    # Train the recognizer
-    recognizer.train(faces, np.array(labels))
 
     try:
         while attempts < MAX_ATTEMPTS:
@@ -174,15 +175,13 @@ def authenticate_user(known_ids):
             label, confidence = recognizer.predict(face_img)
             logging.debug(f"Predicted label: {label}, Confidence: {confidence}")
 
-            # The confidence threshold can be adjusted
-            if confidence < 80:  # The lower the value, the better the match
-                verif_count += 1
-                logging.info(f"Verification success, count: {verif_count}")
-                # if verif_count >= REQUIRED_MATCHES:
-                #     create_flag_file()
-                #     return 0
+            # Confidence threshold for successful match
+            if confidence < 60:  # The lower the value, the better the match
+                logging.info(f"Verification success for user with ID {label}")
+                create_flag_file()
+                return 0
             else:
-                logging.info("Face did not match known faces.")
+                logging.info("Face did not match the trained user.")
 
             attempts += 1
 
@@ -194,8 +193,6 @@ def authenticate_user(known_ids):
 
 def create_flag_file():
     """
-    (!!!DEPRECATED!!!)
-
     Creates a flag file that PAM checks for successful authentication.
     """
     try:
@@ -211,11 +208,11 @@ def main():
     Main function to initiate the authentication process.
     """
     user_id = 1
-    known_ids = [user_id]
-    # Uncomment the following line to capture face images for the user
-    # capture_face(user_id)
-    result = authenticate_user(known_ids)
+    #capture_face(user_id)
+    recognizer = train_recognizer(user_id)
+    result = authenticate_user(recognizer)
     sys.exit(result)
 
 if __name__ == "__main__":
     main()
+
