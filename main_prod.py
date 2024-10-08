@@ -31,7 +31,8 @@ logging.debug('Facial recognition script started')
 # Constants
 MAX_ATTEMPTS = 5
 REQUIRED_MATCHES = 3
-SLEEP_INTERVAL = 1
+SLEEP_INTERVAL = 0
+CONFIDENCE = 90 # more less- more confident
 IMAGE_PATH = "/home/nikitamitin/PycharmProjects/larva/faces/"
 FLAG_FILE = "/tmp/face_recognized"
 
@@ -73,12 +74,13 @@ def capture_face(user_id):
     video_capture = cv2.VideoCapture(0)
 
     try:
-        for i in range(10):
+        for i in range(100):
             ret, frame = video_capture.read()
             if not ret:
                 logging.error("Failed to capture frame from webcam")
                 break
             time.sleep(SLEEP_INTERVAL)
+
 
             # Face detection before saving
             face_img = detect_face_from_frame(frame)
@@ -124,7 +126,7 @@ def train_recognizer(user_id):
     faces = []
     labels = []
 
-    for i in range(10):
+    for i in range(100):
         known_face_path = f"{IMAGE_PATH}{user_id}_{i}.jpg"
         if not os.path.exists(known_face_path):
             logging.warning(f"Stored image not found: {known_face_path}")
@@ -176,7 +178,7 @@ def authenticate_user(recognizer):
             logging.debug(f"Predicted label: {label}, Confidence: {confidence}")
 
             # Confidence threshold for successful match
-            if confidence < 60:  # The lower the value, the better the match
+            if confidence < CONFIDENCE:  # The lower the value, the better the match
                 logging.info(f"Verification success for user with ID {label}")
                 create_flag_file()
                 return 0
@@ -208,7 +210,7 @@ def main():
     Main function to initiate the authentication process.
     """
     user_id = 1
-    #capture_face(user_id)
+    # capture_face(user_id)
     recognizer = train_recognizer(user_id)
     result = authenticate_user(recognizer)
     sys.exit(result)
