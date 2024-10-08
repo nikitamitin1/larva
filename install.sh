@@ -48,6 +48,7 @@ setup_env() {
 
     # IMAGES DIR
     mkdir -p "$INSTALL_DIR/faces"
+    sudo chmod 666 "$INSTALL_DIR/faces"
 }
 
 # COPY EXECUTABLE SCRIPT
@@ -71,7 +72,7 @@ setup_pam() {
 # FACE CONFIGURATION (ONLY FOR ACTIVE CURRENT USER)
 configure_face() {
     echo "Configuring user face..."
-    python3 "$INSTALL_DIR/main_prod.py" --configure-face
+    sudo python3 "$INSTALL_DIR/main_prod.py" --configure-face
 }
 
 # MAIN FUNC

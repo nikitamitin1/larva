@@ -216,12 +216,17 @@ def main():
     parser = argparse.ArgumentParser(description="Face Recognition Service Larva")
     parser.add_argument("--configure-face", action="store_true", help="Configure user face (ONLY FOR ACTIVE CURRENT USER) for authentication (take 100 photo, it's better if it's possible to change ambience in terms of light to retrieve more accurate results.)")
     args = parser.parse_args()
+
     if os.getenv('PAM_USER') is None:
         user_id = os.getuid()
-        print(user_id)
+        logging.debug(f"Current user ID: {user_id}")
+        if user_id == 0:
+            user_id = os.getenv('SUDO_USER')
+
     else:
         user_id = os.getenv('PAM_USER')
 
+    logging.debug(f"Current user ID: {user_id}")
 
     if args.configure_face:
         print(IMAGE_PATH)
