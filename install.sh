@@ -66,10 +66,10 @@ install_script() {
 # PAM SETUP (CHECK UP DOESNT WORK)
 setup_pam() {
     echo "Configuring PAM to use face recognition..."
-    if sudo grep -q "auth sufficient pam_exec.so quiet usr/bin/python3 $INSTALL_DIR/main_prod.py" "$PAM_FILE"; then
+    if sudo grep -q "auth        sufficient    pam_exec.so quiet /usr/bin/python3 /usr/local/larva/main_prod.py"; then
         echo "PAM already configured."
     else
-        sudo sed -i "1i auth sufficient pam_exec.so quiet /usr/bin/python3 $INSTALL_DIR/main_prod.py" "$PAM_FILE"
+        sudo sed -i "1iauth        sufficient    pam_exec.so quiet /usr/bin/python3 /usr/local/larva/main_prod.py" "$PAM_FILE"
         echo "PAM configuration added."
     fi
 }
