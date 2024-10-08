@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import datetime
+from dotenv import load_dotenv
 time_start = datetime.datetime.now()
 
 import cv2
@@ -10,6 +11,9 @@ import datetime
 import timeit
 import os
 import numpy as np
+import argparse
+
+load_dotenv()
 
 def timing_decorator(func):
     def wrapper(*args, **kwargs):
@@ -21,7 +25,7 @@ def timing_decorator(func):
 
 # Logging configuration
 logging.basicConfig(
-    filename="/home/nikitamitin/PycharmProjects/larva/logfile.log",
+    filename=os.getenv("LOG_FILE"),
     level=logging.DEBUG,
     format="%(asctime)s - %(levelname)s - %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S"
@@ -29,11 +33,11 @@ logging.basicConfig(
 logging.debug('Facial recognition script started')
 
 # Constants
-MAX_ATTEMPTS = 5
-REQUIRED_MATCHES = 3
-SLEEP_INTERVAL = 0
-CONFIDENCE = 90 # more less- more confident
-IMAGE_PATH = "/home/nikitamitin/PycharmProjects/larva/faces/"
+MAX_ATTEMPTS = int(os.getenv("MAX_ATTEMPTS", 5))
+REQUIRED_MATCHES = int(os.getenv("REQUIRED_MATCHES", 1))
+SLEEP_INTERVAL = int(os.getenv("SLEEP_INTERVAL", 0))
+CONFIDENCE = int(os.getenv("CONFIDENCE", 80)) # more less - more confident, less successful attempts
+IMAGE_PATH = os.getenv("IMAGE_PATH")
 FLAG_FILE = "/tmp/face_recognized"
 
 # Loading the Haar Cascade classifier for face detection
@@ -61,7 +65,7 @@ def detect_face(image_path):
     if len(faces) > 0:
         x, y, w, h = faces[0]
         face_img = gray[y:y + h, x:x + w]
-        face_img = cv2.resize(face_img, (200, 200))  # Resize for consistency
+        face_img = cv2.resize(face_img, (300, 300))  # Resize for consistency
         return face_img
     else:
         logging.warning("No face detected in image: " + image_path)
@@ -106,7 +110,7 @@ def detect_face_from_frame(frame):
     if len(faces) > 0:
         x, y, w, h = faces[0]
         face_img = gray[y:y + h, x:x + w]
-        face_img = cv2.resize(face_img, (200, 200))  # Resize for consistency
+        face_img = cv2.resize(face_img, (300, 300))  # Resize for consistency
         return face_img
     else:
         return None
@@ -209,11 +213,23 @@ def main():
     """
     Main function to initiate the authentication process.
     """
-    user_id = 1
-    # capture_face(user_id)
-    recognizer = train_recognizer(user_id)
-    result = authenticate_user(recognizer)
-    sys.exit(result)
+    parser = argparse.ArgumentParser(description="Face Recognition Service Larva")
+    parser.add_argument("--configure-face", action="store_true", help="Configure user face (ONLY FOR ACTIVE CURRENT USER) for authentication (take 100 photo, it's better if it's possible to change ambience in terms of light to retrieve more accurate results.)")
+    args = parser.parse_args()
+    if os.getenv('PAM_USER') is None:
+        user_id = os.getuid()
+        print(user_id)
+    else:
+        user_id = os.getenv('PAM_USER')
+
+
+    if args.configure_face:
+        print(IMAGE_PATH)
+        capture_face(user_id)
+    else:
+        recognizer = train_recognizer(user_id)
+        result = authenticate_user(recognizer)
+        sys.exit(result)
 
 if __name__ == "__main__":
     main()
