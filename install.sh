@@ -33,6 +33,7 @@ setup_env() {
     echo "Setting up environment variables..."
     mkdir -p "$INSTALL_DIR"
     touch "$ENV_FILE"
+    sudo chmod 777 "$ENV_FILE"
 
     # .ENV VARS
     echo "IMAGE_PATH=$INSTALL_DIR/faces/" >> "$ENV_FILE"
@@ -49,6 +50,10 @@ setup_env() {
     # IMAGES DIR
     mkdir -p "$INSTALL_DIR/faces"
     sudo chmod 666 "$INSTALL_DIR/faces"
+
+    # LOG FILE
+    touch "$INSTALL_DIR/logfile.log"
+    sudo chmod 666 "$INSTALL_DIR/logfile.log"
 }
 
 # COPY EXECUTABLE SCRIPT
