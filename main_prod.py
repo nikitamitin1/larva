@@ -12,6 +12,7 @@ import timeit
 import os
 import numpy as np
 import argparse
+import pwd
 
 load_dotenv()
 
@@ -221,7 +222,8 @@ def main():
         user_id = os.getuid()
         logging.debug(f"Current user ID: {user_id}")
         if user_id == 0:
-            user_id = os.getenv('SUDO_USER')
+            user_name = os.getenv('SUDO_USER')
+            user_id = pwd.getpwnam(user_name).pw_uid
 
     else:
         user_id = os.getenv('PAM_USER')
