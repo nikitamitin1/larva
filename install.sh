@@ -56,20 +56,20 @@ setup_env() {
     sudo chmod 666 "$INSTALL_DIR/logfile.log"
 }
 
-# COPY EXECUTABLE SCRIPT
+# COPY SCRIPT TO BIN(!!!! DOESNT WORK NOW)
 install_script() {
-    echo "Installing script to $BIN_PATH..."
-    sudo cp "$INSTALL_DIR/main_prod.py" "$BIN_PATH/$SERVICE_NAME"
-    sudo chmod +x "$BIN_PATH/$SERVICE_NAME"
+    echo "Installing script to $BIN_PATH... (DOESNT WORK NOW)"
+#    sudo cp "$INSTALL_DIR/main_prod.py" "$BIN_PATH/$SERVICE_NAME"
+#    sudo chmod +x "$BIN_PATH/$SERVICE_NAME"
 }
 
 # PAM SETUP (CHECK UP DOESNT WORK)
 setup_pam() {
     echo "Configuring PAM to use face recognition..."
-    if sudo grep -Fq "auth sufficient pam_exec.so quiet usr/bin/python3 $BIN_PATH/$SERVICE_NAME" "$PAM_FILE"; then
+    if sudo grep -q "auth sufficient pam_exec.so quiet usr/bin/python3 $INSTALL_DIR/main_prod.py" "$PAM_FILE"; then
         echo "PAM already configured."
     else
-        sudo sed -i "1i auth sufficient pam_exec.so quiet /usr/bin/python3 $BIN_PATH/$SERVICE_NAME" "$PAM_FILE"
+        sudo sed -i "1i auth sufficient pam_exec.so quiet /usr/bin/python3 $INSTALL_DIR/main_prod.py" "$PAM_FILE"
         echo "PAM configuration added."
     fi
 }
@@ -98,10 +98,11 @@ main() {
     echo "Service installed successfully. Would you like to configure user face now? (y/n)"
     read -r setup_choice
     if [ "$setup_choice" = "y" ]; then
-        echo "100 photos will be taken automatically. You can change them later by running: sudo $SERVICE_NAME --configure-face"
+        echo "100 photos will be taken automatically. You can change them later by running: sudo python 3 $INSTALL_DIR/main_prod.py --configure-face"
         configure_face
     else
-        echo "You can configure face later by running: sudo $SERVICE_NAME --configure-face"
+        # TEMPORARY SOLUTION, NEED TO MOVE TO /bin TO MAKE IT ACCESSIBLE FROM ANYWHERE
+        echo "You can configure face later by running: sudo python 3 $INSTALL_DIR/main_prod.py --configure-face"
     fi
 
     echo "Installation and setup complete."
