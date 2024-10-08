@@ -216,11 +216,11 @@ def main():
     """
     parser = argparse.ArgumentParser(description="Face Recognition Service Larva")
     parser.add_argument("--configure-face", action="store_true", help="Configure user face (ONLY FOR ACTIVE CURRENT USER) for authentication (take 100 photo, it's better if it's possible to change ambience in terms of light to retrieve more accurate results.)")
+    parser.add_argument("--user-id", type=int, help="User ID of the original user running sudo")
     args = parser.parse_args()
 
     if os.getenv('PAM_USER') is None:
         user_id = os.getuid()
-        logging.debug(f"Current user ID: {user_id}")
         if user_id == 0:
             user_name = os.getenv('SUDO_USER')
             user_id = pwd.getpwnam(user_name).pw_uid
@@ -231,8 +231,12 @@ def main():
     logging.debug(f"Current user ID: {user_id}")
 
     if args.configure_face:
-        print(IMAGE_PATH)
-        capture_face(user_id)
+        if args.user_id is None:
+            print(IMAGE_PATH)
+            capture_face(user_id)
+        else:
+            user_id = args.user_id
+            capture_face(user_id)
     else:
         recognizer = train_recognizer(user_id)
         result = authenticate_user(recognizer)

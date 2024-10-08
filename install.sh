@@ -72,7 +72,10 @@ setup_pam() {
 # FACE CONFIGURATION (ONLY FOR ACTIVE CURRENT USER)
 configure_face() {
     echo "Configuring user face..."
-    sudo python3 "$INSTALL_DIR/main_prod.py" --configure-face
+    USER_ID=$(id -u "$SUDO_USER")
+
+    # we need user-id here to specify user_id which started installation using sudo
+    python3 "$INSTALL_DIR/main_prod.py" --configure-face --user-id "$USER_ID"
 }
 
 # MAIN FUNC
