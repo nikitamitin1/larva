@@ -23,7 +23,7 @@ Easy installation is described step-by-step. This service utilizes face recognit
 - **Python 3** and **pip** must be installed on your system.
 - You need **sudo** privileges to perform the installation.
 
-## Installation Steps ⚙️
+
 
 Download **install.sh**
 
@@ -60,5 +60,18 @@ if not you may add it manually and then push ```CTRL+X``` to save changes.
 *Don't change anything but adding this particular string into the first row*
 
 *Any changes may cause problem with PAM GUI authentication*
+
+## Service Configuration⚙️
+
+Execute next command and change parameters as you prefer:
+
+```bash
+sudo nano /usr/local/larva/.env
+```
+
+then push ```CTRL+X``` to store modification.
+
+*Note:* Lower CONFIDENCE means higher precision, but less tolerance and therefore less probability of unblock, especially in complicated lighting ambience.
+
 
 Enjoy! 
