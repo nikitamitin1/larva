@@ -1,5 +1,5 @@
 # Larva v1.0 📷 🔑
-Small and fast tool to face unlock your PAM on Linux
+Small and fast tool to face unlock your Linux (PAM module)
 
 **DISLAIMER!** 🔴
 
